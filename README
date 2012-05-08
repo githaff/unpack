@@ -1,1 +1,43 @@
 Unpack is a wrap for set of unpacking tools such as tar, unrar, unzip.
+
+The main purpose of this script is to prevent user from agression of
+enemy archives which doesn't contains nested subdirectory and so
+throws many different items (files and/or directories) into current
+directory while unpacking. Which may be pretty paynfull if archive was
+unpacked in some ~/Downloads path which already contains many
+different files - new ones can easily be lost amongst old ones.
+
+So unpack script accepts as argument path to the archive and unpacks
+it directly into current folder only if it contains only one
+item. Othrewise it creates new directory and unpacks contents of
+archive there. Optionally target path can be specified where contets
+will be placed.
+
+Archive type is deduced from archive extension.
+
+
+USAGE
+
+unpack [OPTION]... ARCHIVE [TARGET]
+
+Options:
+  -h   show help
+  -v   show all processing info during unpacking
+  -s   print result file or directory path
+
+
+EXAMPLES
+
+unpack -s test.tar.gz
+unpack test.rar target-dir
+
+
+HINTS
+
+Good idea will be set some alias for fast using of this script like
+
+alias up='unpack -s'
+
+in the ~/.bashrc which will make 'up' to silently unpack specified
+archive and print unpacked file or directory where archive contents
+were placed.
