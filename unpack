@@ -1,0 +1,191 @@
+#!/bin/sh
+
+
+UTIL_NAME="$(basename ${0})"
+
+function help () {
+cat <<EOF
+Usage: ${UTIL_NAME} [OPTION]... ARCHIVE [TARGET]
+Unpack ARCHIVE to TARGET if specified. If not - unpack to current
+directory if archive containts only one item (file or directory) or to
+new directory named after archive name if archive containts more than
+one item.
+
+Options
+  -h     show help
+  -v     show all processing info during unpacking
+  -s     print result file or directory path
+EOF
+}
+
+
+# Delete termporary directory on interrupt
+function sig_terminate () {
+    rm -rf "${TMP_DIR}" > /dev/null
+    if [ -n "${DST}" ]
+    then
+        rm -rf "${DST}" > /dev/null
+    fi
+    exit 0
+}
+trap "sig_terminate" SIGINT SIGHUP SIGTERM
+
+
+# Parse arguments
+TEMP=$(getopt -o hsv -n 'enc' -- "$@")
+if [ $? != 0 ] ; then echo "Try 'enc --help' for more information." >&2 ; exit 1 ; fi
+eval set -- "$TEMP"
+while true ; do
+    case "$1" in
+	-h)
+            help
+            exit 0
+            ;;
+	-v)
+            VERBOSE="TRUE"
+            shift
+            ;;
+	-s)
+	    SHOW_RES="TRUE"
+            shift
+            ;;
+	--)
+	    shift
+            break
+            ;;
+    esac
+done
+
+# Chenumber of arguments
+if [ "${#}" -gt 2 -o "${#}" -lt 1 ]
+then
+    help
+    exit 1
+fi
+
+
+# File to unpack
+ARCHIVE=$(readlink -f "${1}")
+ARCHIVE_DIR=$(dirname "${ARCHIVE}")
+
+# Check file existance
+if [ ! -f "${ARCHIVE}" ]
+then
+    echo "${UTIL_NAME}: cannot find ${ARCHIVE}: no such archive file" >&2
+    exit 1
+fi
+
+# Archive basename and extension
+EXT=$(echo "${ARCHIVE}" | sed 's/.*\.//' | tr [:upper:] [:lower:])
+BASENAME=$(basename "${ARCHIVE}" .${EXT})
+if [ "${EXT}" = "gz" -o "${EXT}" = "bz2" ]
+then
+    SUB_EXT=$(echo "${BASENAME}" | sed 's/.*\.//' | tr [:upper:] [:lower:])
+    if [ "${SUB_EXT}" = "tar" ]
+    then
+        EXT="${SUB_EXT}"."${EXT}"
+        BASENAME=$(basename "${ARCHIVE}" ."${EXT}")
+    fi
+fi
+
+# If target is specified and such file exists it must be directory
+TARGET_PATH="${2}"
+if [ -f "${TARGET_PATH}" -a ! -d "${TARGET_PATH}" ]
+then
+    echo "${UTIL_NAME}: cannot create directory ${TARGET_PATH}" >&2
+    exit 1
+fi
+
+# Temporary extraction path 
+TMP_DIR=$(mktemp -u -d -t ${UTIL_NAME}.XXXXXXXXXXXXX --tmpdir=.)
+TMP_DIR=$(readlink -f "${TMP_DIR}")
+
+# Extract archive contant to the temporary directory
+# Each case must unpack archive with path ${ARCHIVE} to directory
+# ${TMP_DIR}.
+# Hint: If corresponding unpacking tool doesn't support target
+# directory specification - copy archive to directory previously
+mkdir "${TMP_DIR}"
+case "${EXT}" in
+    "rar")
+        if [ -n "${VERBOSE}" ]
+        then
+            unrar x "${ARCHIVE}" "${TMP_DIR}"
+        else
+            unrar x "${ARCHIVE}" "${TMP_DIR}" &> /dev/null
+        fi
+        ;;
+    "zip")
+        if [ -n "${VERBOSE}" ]
+        then
+            unzip -d "${TMP_DIR}" "${ARCHIVE}"
+        else
+            unzip -d "${TMP_DIR}" "${ARCHIVE}" &> /dev/null
+        fi
+        ;;
+    "tar.bz2" | "tar.gz" | "tgz")
+        if [ -n "${VERBOSE}" ]
+        then
+            tar xvf "${ARCHIVE}" -C "${TMP_DIR}"
+        else
+            tar xf "${ARCHIVE}" -C "${TMP_DIR}" &> /dev/null
+        fi
+        ;;    
+    *)
+        echo "${UTIL_NAME}: unknown archive format"
+        rm -rf "${TMP_DIR}" &> /dev/null
+        exit 1
+        ;;
+esac
+
+
+# If target path specified
+if [ -n "${TARGET_PATH}" ]
+then
+    DST=$(readlink -f "${TARGET_PATH}")
+    mkdir -p "${DST}"
+    SRC="${TMP_DIR}/*"
+else
+    # Get number of files extracted from archive
+    NUM_OF_FILES=$(ls -1 "${TMP_DIR}" | wc -l)
+    if [ "${NUM_OF_FILES}" = "1" ]
+    # If it is a single file or directory - unpack it to current directory
+    then
+        DST=$(pwd)/$(ls "${TMP_DIR}")
+        ITEM=$(readlink -f "${TMP_DIR}"/*)
+        ITEM=$(basename "${ITEM}")
+        SRC="${TMP_DIR}"/"${ITEM}"
+        # If such file or directory already exists - act like there is
+        # several file in archive
+        if [ -e "${ITEM}" ]
+        then
+            DST=$(readlink -f ./"${BASENAME}")
+            SRC="${TMP_DIR}"
+        fi
+    # If there is more than one files in archive - unpack to directory
+    # named after acrhive basename
+    else
+        DST=$(readlink -f ./"${BASENAME}")
+        SRC="${TMP_DIR}"
+    fi
+fi
+
+# Check if such file or directory already exists
+if [ -e "${DST}" ]
+then
+    echo "${UTIL_NAME}: cannot unpack '$(basename ${DST})': such file already exists in current directory"
+    rm -rf "${TMP_DIR}"
+    exit 1
+fi
+
+# Move archive to destination
+mv "${SRC}" "${DST}"
+
+# Remove temporary derictory if it's still exists
+rm -rf "${TMP_DIR}" &> /dev/null
+
+# Show result file or directory path if needed
+if [ -n "${SHOW_RES}" ]
+then
+    echo "${DST}"
+fi
