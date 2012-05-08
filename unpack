@@ -123,7 +123,7 @@ case "${EXT}" in
             unzip -d "${TMP_DIR}" "${ARCHIVE}" &> /dev/null
         fi
         ;;
-    "tar.bz2" | "tar.gz" | "tgz")
+    "tar.bz2" | "tar.gz" | "tgz" | "tbz")
         if [ -n "${VERBOSE}" ]
         then
             tar xvf "${ARCHIVE}" -C "${TMP_DIR}"
