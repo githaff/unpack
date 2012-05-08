@@ -7,11 +7,11 @@ directory while unpacking. Which may be pretty paynfull if archive was
 unpacked in some ~/Downloads path which already contains many
 different files - new ones can easily be lost amongst old ones.
 
-So unpack script accepts as argument path to the archive and unpacks
-it directly into current folder only if it contains only one
-item. Othrewise it creates new directory and unpacks contents of
-archive there. Optionally target path can be specified where contets
-will be placed.
+In case if archive contains only one file or one directory, it will be
+extracted directly into target (current by default) dir. Otherwise, a
+folder named with the archive basename (without extension) would be
+created in the target directory were all archive containings would be
+placed.
 
 Archive type is deduced from archive extension.
 
