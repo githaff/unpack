@@ -131,6 +131,16 @@ case "${EXT}" in
             tar xf "${ARCHIVE}" -C "${TMP_DIR}" &> /dev/null
         fi
         ;;    
+    "deb")
+        cd "${TMP_DIR}"
+        if [ -n "${VERBOSE}" ]
+        then
+            ar xv "${ARCHIVE}"
+        else
+            ar x "${ARCHIVE}" &> /dev/null
+        fi
+        cd "${OLDPWD}"
+        ;;
     "rpm")
         if [ -n "${VERBOSE}" ]
         then
