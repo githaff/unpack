@@ -131,6 +131,14 @@ case "${EXT}" in
             tar xf "${ARCHIVE}" -C "${TMP_DIR}" &> /dev/null
         fi
         ;;    
+    "rpm")
+        if [ -n "${VERBOSE}" ]
+        then
+            rpm2cpio "${ARCHIVE}" | cpio -idmuv --no-absolute-filenames "${TMP_DIR}"
+        else
+            rpm2cpio "${ARCHIVE}" | cpio -idmuv --no-absolute-filenames --quiet "${TMP_DIR}"
+        fi
+        ;;
     *)
         echo "${UTIL_NAME}: unknown archive format"
         rm -rf "${TMP_DIR}" &> /dev/null
