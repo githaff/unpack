@@ -18,7 +18,7 @@ Archive type is deduced from archive extension.
 
 USAGE
 
-unpack [OPTION]... ARCHIVE [TARGET]
+unpack [OPTION]... ARCHIVE
 
 Options:
   -h   show help

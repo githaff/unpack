@@ -5,11 +5,10 @@ UTIL_NAME="$(basename ${0})"
 
 function help () {
 cat <<EOF
-Usage: ${UTIL_NAME} [OPTION]... ARCHIVE [TARGET]
-Unpack ARCHIVE to TARGET if specified. If not - unpack to current
-directory if archive containts only one item (file or directory) or to
-new directory named after archive name if archive containts more than
-one item.
+Usage: ${UTIL_NAME} [OPTION]... ARCHIVE
+Unpack ARCHIVE to current directory if archive containts only one item
+(file or directory) or to new directory named after archive name if
+archive containts more than one item.
 
 Options
   -h     show help
@@ -88,14 +87,6 @@ then
     fi
 fi
 
-# If target is specified and such file exists it must be directory
-TARGET_PATH="${2}"
-if [ -f "${TARGET_PATH}" -a ! -d "${TARGET_PATH}" ]
-then
-    echo "${UTIL_NAME}: cannot create directory ${TARGET_PATH}" >&2
-    exit 1
-fi
-
 # Temporary extraction path 
 TMP_DIR=$(mktemp -u -d -t ${UTIL_NAME}.XXXXXXXXXXXXX --tmpdir=.)
 TMP_DIR=$(readlink -f "${TMP_DIR}")
@@ -157,35 +148,27 @@ case "${EXT}" in
 esac
 
 
-# If target path specified
-if [ -n "${TARGET_PATH}" ]
+# Get number of files extracted from archive
+NUM_OF_FILES=$(ls -1 "${TMP_DIR}" | wc -l)
+if [ "${NUM_OF_FILES}" = "1" ]
+# If it is a single file or directory - unpack it to current directory
 then
-    DST=$(readlink -f "${TARGET_PATH}")
-    mkdir -p "${DST}"
-    SRC="${TMP_DIR}/*"
-else
-    # Get number of files extracted from archive
-    NUM_OF_FILES=$(ls -1 "${TMP_DIR}" | wc -l)
-    if [ "${NUM_OF_FILES}" = "1" ]
-    # If it is a single file or directory - unpack it to current directory
+    DST=$(pwd)/$(ls "${TMP_DIR}")
+    ITEM=$(readlink -f "${TMP_DIR}"/*)
+    ITEM=$(basename "${ITEM}")
+    SRC="${TMP_DIR}"/"${ITEM}"
+    # If such file or directory already exists - act like there is
+    # several file in archive
+    if [ -e "${ITEM}" ]
     then
-        DST=$(pwd)/$(ls "${TMP_DIR}")
-        ITEM=$(readlink -f "${TMP_DIR}"/*)
-        ITEM=$(basename "${ITEM}")
-        SRC="${TMP_DIR}"/"${ITEM}"
-        # If such file or directory already exists - act like there is
-        # several file in archive
-        if [ -e "${ITEM}" ]
-        then
-            DST=$(readlink -f ./"${BASENAME}")
-            SRC="${TMP_DIR}"
-        fi
-    # If there is more than one files in archive - unpack to directory
-    # named after acrhive basename
-    else
         DST=$(readlink -f ./"${BASENAME}")
         SRC="${TMP_DIR}"
     fi
+# If there is more than one files in archive - unpack to directory
+# named after acrhive basename
+else
+    DST=$(readlink -f ./"${BASENAME}")
+    SRC="${TMP_DIR}"
 fi
 
 # Check if such file or directory already exists
