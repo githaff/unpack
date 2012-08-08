@@ -30,7 +30,6 @@ Options:
 EXAMPLES
 
 unpack -s test.tar.gz
-unpack test.rar target-dir
 
 
 HINTS
@@ -42,3 +41,8 @@ alias up='unpack -s'
 in the ~/.bashrc which will make 'up' to silently unpack specified
 archive and print unpacked file or directory where archive contents
 were placed.
+
+To unpack archive to needed path combination of unpack and cd commands
+must be used like:
+
+cd dir; unpack ../pack.tar.gz; cd $OLDPWD
