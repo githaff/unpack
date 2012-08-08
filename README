@@ -21,9 +21,10 @@ USAGE
 unpack [OPTION]... ARCHIVE
 
 Options:
-  -h   show help
-  -v   show all processing info during unpacking
-  -s   print result file or directory path
+  -h         show help
+  -v         show all processing info during unpacking
+  -s         print result file or directory path
+  --version  print script version
 
 
 EXAMPLES

@@ -2,6 +2,7 @@
 
 
 UTIL_NAME="$(basename ${0})"
+UTIL_VERSION="2012.08.08"
 
 function help () {
 cat <<EOF
@@ -11,12 +12,16 @@ Unpack ARCHIVE to current directory if archive containts only one item
 archive containts more than one item.
 
 Options
-  -h     show help
-  -v     show all processing info during unpacking
-  -s     print result file or directory path
+  -h         show help
+  -v         show all processing info during unpacking
+  -s         print result file or directory path
+  --version  print script version
 EOF
 }
 
+function version () {
+    echo "${UTIL_VERSION}"
+}
 
 # Delete termporary directory on interrupt
 function sig_terminate () {
@@ -31,13 +36,17 @@ trap "sig_terminate" SIGINT SIGHUP SIGTERM
 
 
 # Parse arguments
-TEMP=$(getopt -o hsv -n 'enc' -- "$@")
+TEMP=$(getopt -o hsv -l version -n 'enc' -- "$@")
 if [ $? != 0 ] ; then echo "Try 'enc --help' for more information." >&2 ; exit 1 ; fi
 eval set -- "$TEMP"
 while true ; do
     case "$1" in
 	-h)
             help
+            exit 0
+            ;;
+        --version)
+            version
             exit 0
             ;;
 	-v)
