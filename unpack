@@ -123,6 +123,16 @@ case "${EXT}" in
             unzip -d "${TMP_DIR}" "${ARCHIVE}" &> /dev/null
         fi
         ;;
+    "7z")
+        cd "${TMP_DIR}"
+        if [ -n "${VERBOSE}" ]
+        then
+            7z e  "${ARCHIVE}"
+        else
+            7z e "${ARCHIVE}" &> /dev/null
+        fi
+        cd "${OLDPWD}"
+        ;;
     "tar.bz2" | "tar.gz" | "tar.xz" | "tgz" | "tbz" | "txz")
         if [ -n "${VERBOSE}" ]
         then
