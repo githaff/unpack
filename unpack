@@ -36,12 +36,12 @@ trap "sig_terminate" SIGINT SIGHUP SIGTERM
 
 
 # Parse arguments
-TEMP=$(getopt -o hsv -l version -n 'enc' -- "$@")
-if [ $? != 0 ] ; then echo "Try 'enc --help' for more information." >&2 ; exit 1 ; fi
+TEMP=$(getopt -o hsv -l help,version -n "${UTIL_NAME}" -- "$@")
+if [ $? != 0 ] ; then echo "Try '${UTIL_NAME} --h' for more information." >&2 ; exit 1 ; fi
 eval set -- "$TEMP"
 while true ; do
     case "$1" in
-	-h)
+	-h|--help)
             help
             exit 0
             ;;
