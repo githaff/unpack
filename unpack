@@ -133,7 +133,7 @@ case "${EXT}" in
         fi
         cd "${OLDPWD}"
         ;;
-    "tar.bz2" | "tar.gz" | "tar.xz" | "tgz" | "tbz" | "txz")
+    "tar" | "tar.bz2" | "tar.gz" | "tar.xz" | "tar.lzma" | "tgz" | "tbz" | "txz")
         if [ -n "${VERBOSE}" ]
         then
             tar xvf "${ARCHIVE}" -C "${TMP_DIR}"
