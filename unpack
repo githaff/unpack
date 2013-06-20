@@ -64,7 +64,7 @@ while true ; do
     esac
 done
 
-# Chenumber of arguments
+# Check number of arguments
 if [ "${#}" -gt 2 -o "${#}" -lt 1 ]
 then
     help
@@ -74,6 +74,7 @@ fi
 
 # File to unpack
 ARCHIVE=$(readlink -f "${1}")
+ARCHIVE_NAME=$(basename "${ARCHIVE}")
 ARCHIVE_DIR=$(dirname "${ARCHIVE}")
 
 # Check file existance
@@ -83,17 +84,25 @@ then
     exit 1
 fi
 
-# Archive basename and extension
-EXT=$(echo "${ARCHIVE}" | sed 's/.*\.//' | tr [:upper:] [:lower:])
+# Archive basename and extension (defined as substring after last '.')
+EXT=$(basename "${ARCHIVE_NAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr [:upper:] [:lower:])
+if [ -z "${EXT}" ]; then
+    echo "${UTIL_NAME}: file ${ARCHIVE} is not archive: cannot separate extension" >&2
+    exit 1
+fi
 BASENAME=$(basename "${ARCHIVE}" .${EXT})
-if [ "${EXT}" = "gz" -o "${EXT}" = "bz2" ]
+# Subextension (defined as part after penult dot) and corresponding basename
+SUB_EXT=$(echo "${BASENAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr [:upper:] [:lower:])
+if [ -n "${SUB_EXT}" ]; then
+    SUB_BASENAME=$(basename "${ARCHIVE_NAME}" ."${SUB_EXT}"."${EXT}")
+fi
+
+# If sub-extension is 'tar' - use it as part of whole extension (like
+# 'tar.gz' instead of 'gz')
+if [ "${SUB_EXT}" = "tar" ]
 then
-    SUB_EXT=$(echo "${BASENAME}" | sed 's/.*\.//' | tr [:upper:] [:lower:])
-    if [ "${SUB_EXT}" = "tar" ]
-    then
-        EXT="${SUB_EXT}"."${EXT}"
-        BASENAME=$(basename "${ARCHIVE}" ."${EXT}")
-    fi
+    EXT="${SUB_EXT}.${EXT}"
+    BASENAME="${SUB_BASENAME}"
 fi
 
 # Temporary extraction path 
@@ -160,7 +169,7 @@ case "${EXT}" in
         fi
         ;;
     *)
-        echo "${UTIL_NAME}: unknown archive format"
+        echo "${UTIL_NAME}: unknown archive format '${EXT}'"
         rm -rf "${TMP_DIR}" &> /dev/null
         exit 1
         ;;

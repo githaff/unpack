@@ -1,4 +1,5 @@
 * make support for not packerd data (just archived) like *.bz2, *.gz, *.xz, *.lzo
-* make support for *.tar.lzo archives (check if thats right name)
-* somehow for name linux-headers-3.8.10-1-x86_64.pkg.tar.xz is says that format is "xz"
-* test whether simple .tar archives are supported
+* use MIME in case no extension is present (e.g. filename without dots at all)
+* if needed directory/name is already presend - unpack as '<name> (1)'
+  or something like this (must be regulated through options)
+* by default unpack must show result result path (like now with -s)
