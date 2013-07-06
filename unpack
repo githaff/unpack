@@ -15,6 +15,9 @@ Options
   -h         show help
   -v         show all processing info during unpacking
   -q         do not print result file or directory path
+  -f         force item overwrite in case such already exists. In case
+             of directories it will be fully deleted before unpacking a
+             new one
   --version  print script version
 EOF
 }
@@ -37,7 +40,7 @@ trap "terminate" SIGINT SIGHUP SIGTERM
 
 ### Parse arguments
 function parse_arguments () {
-    TEMP=$(getopt -o hvq -l help,version -n "${UTIL_NAME}" -- "$@")
+    TEMP=$(getopt -o hvqf -l help,version,force -n "${UTIL_NAME}" -- "$@")
     if [ $? != 0 ] ; then echo "Try '${UTIL_NAME} --h' for more information." >&2 ; exit 1 ; fi
     eval set -- "$TEMP"
     while true ; do
@@ -56,6 +59,10 @@ function parse_arguments () {
                 ;;
 	    -q)
 	        DONT_SHOW_RES="TRUE"
+                shift
+                ;;
+            -f|--force)
+	        FORCE_REPLACE="TRUE"
                 shift
                 ;;
 	    --)
@@ -229,6 +236,20 @@ function tmp_extract () {
 }
 
 
+### Increment filename
+##    if given name is already taken than find which name (following
+##    '<name> (N)' pattern) wasn't taken yet in this directory.
+
+function inc_name () {
+    ind="1"
+
+    while [ -e "${1} ($ind)" ]; do
+        ((ind++))
+    done
+    
+    DST="${1} ($ind)"
+}
+
 ### Finalize unpacking by moving extracted to the temporary directory
 ### files into needed path (following described in the README rules)
 function finalize_extracted () {
@@ -241,13 +262,6 @@ function finalize_extracted () {
         ITEM=$(readlink -f "${TMP_DIR}"/*)
         ITEM=$(basename "${ITEM}")
         SRC="${TMP_DIR}"/"${ITEM}"
-        # If such file or directory already exists - act like there is
-        # several file in archive
-        if [ -e "${ITEM}" ]
-        then
-            DST=$(readlink -f ./"${BASENAME}")
-            SRC="${TMP_DIR}"
-        fi
         # If there is more than one files in archive - unpack to directory
         # named after acrhive basename
     else
@@ -258,9 +272,11 @@ function finalize_extracted () {
     # Check if such file or directory already exists
     if [ -e "${DST}" ]
     then
-        echo "${UTIL_NAME}: cannot unpack '$(basename ${DST})': such file already exists in current directory"
-        rm -rf "${TMP_DIR}"
-        exit 1
+        if [ -n "${FORCE_REPLACE}" ]; then
+            rm -rf "${DST}"
+        else
+            inc_name "${DST}"
+        fi
     fi
 
     # Move archive to destination
