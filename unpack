@@ -121,7 +121,7 @@ case "${EXT}" in
         then
             unrar x "${ARCHIVE}" "${TMP_DIR}"
         else
-            unrar x "${ARCHIVE}" "${TMP_DIR}" &> /dev/null
+            unrar x "${ARCHIVE}" "${TMP_DIR}" > /dev/null
         fi
         ;;
     "zip")
@@ -129,7 +129,7 @@ case "${EXT}" in
         then
             unzip -d "${TMP_DIR}" "${ARCHIVE}"
         else
-            unzip -d "${TMP_DIR}" "${ARCHIVE}" &> /dev/null
+            unzip -qq -d "${TMP_DIR}" "${ARCHIVE}"
         fi
         ;;
     "7z")
@@ -138,7 +138,7 @@ case "${EXT}" in
         then
             7z e  "${ARCHIVE}"
         else
-            7z e "${ARCHIVE}" &> /dev/null
+            7z e "${ARCHIVE}" > /dev/null
         fi
         cd "${OLDPWD}"
         ;;
@@ -147,7 +147,7 @@ case "${EXT}" in
         then
             tar xvf "${ARCHIVE}" -C "${TMP_DIR}"
         else
-            tar xf "${ARCHIVE}" -C "${TMP_DIR}" &> /dev/null
+            tar xf "${ARCHIVE}" -C "${TMP_DIR}" > /dev/null
         fi
         ;;
     "bz2")
@@ -156,7 +156,7 @@ case "${EXT}" in
         then
             bzcat -v "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
         else
-            bzcat "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
+            bzcat -q "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
         fi
         ;;
     "gz")
@@ -165,7 +165,7 @@ case "${EXT}" in
         then
             gunzip -v -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
         else
-            gunzip -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
+            gunzip -q -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
         fi
         ;;
     "xz")
@@ -174,7 +174,7 @@ case "${EXT}" in
         then
             xzcat -v -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
         else
-            xzcat -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
+            xzcat -q -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
         fi
         ;;
     "lzo")
@@ -192,7 +192,7 @@ case "${EXT}" in
         then
             ar xv "${ARCHIVE}"
         else
-            ar x "${ARCHIVE}" &> /dev/null
+            ar x "${ARCHIVE}" > /dev/null
         fi
         cd "${OLDPWD}"
         ;;
