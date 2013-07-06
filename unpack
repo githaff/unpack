@@ -149,7 +149,16 @@ case "${EXT}" in
         else
             tar xf "${ARCHIVE}" -C "${TMP_DIR}" &> /dev/null
         fi
-        ;;    
+        ;;
+    "bz2")
+        mkdir -p "${TMP_DIR}"
+        if [ -n "${VERBOSE}" ]
+        then
+            bzcat -v "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
+        else
+            bzcat -v "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
+        fi
+        ;;
     "deb")
         cd "${TMP_DIR}"
         if [ -n "${VERBOSE}" ]
