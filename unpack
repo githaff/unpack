@@ -14,7 +14,7 @@ archive containts more than one item.
 Options
   -h         show help
   -v         show all processing info during unpacking
-  -s         print result file or directory path
+  -q         do not print result file or directory path
   --version  print script version
 EOF
 }
@@ -37,7 +37,7 @@ trap "terminate" SIGINT SIGHUP SIGTERM
 
 ### Parse arguments
 function parse_arguments () {
-    TEMP=$(getopt -o hsv -l help,version -n "${UTIL_NAME}" -- "$@")
+    TEMP=$(getopt -o hvq -l help,version -n "${UTIL_NAME}" -- "$@")
     if [ $? != 0 ] ; then echo "Try '${UTIL_NAME} --h' for more information." >&2 ; exit 1 ; fi
     eval set -- "$TEMP"
     while true ; do
@@ -54,8 +54,8 @@ function parse_arguments () {
                 VERBOSE="TRUE"
                 shift
                 ;;
-	    -s)
-	        SHOW_RES="TRUE"
+	    -q)
+	        DONT_SHOW_RES="TRUE"
                 shift
                 ;;
 	    --)
@@ -71,6 +71,8 @@ function parse_arguments () {
         help
         exit 1
     fi
+
+    ARCHIVE=$(readlink -f "${1}")
 }
 
 ### Get from archive name its:
@@ -80,7 +82,6 @@ function parse_arguments () {
 ##    temporarily
 function analize_archive_name () {
     # File to unpack
-    ARCHIVE=$(readlink -f "${1}")
     ARCHIVE_NAME=$(basename "${ARCHIVE}")
     ARCHIVE_DIR=$(dirname "${ARCHIVE}")
     
@@ -274,12 +275,12 @@ function finalize_extracted () {
 ######################################## Processing ########################################
 
 parse_arguments ${@}
-analize_archive_name "${1}"
+analize_archive_name "${ARCHIVE}"
 tmp_extract
 finalize_extracted
 
 # Show result file or directory path if needed
-if [ -n "${SHOW_RES}" ]
+if [ -z "${DONT_SHOW_RES}" ]
 then
     echo "${DST}"
 fi
