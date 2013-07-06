@@ -12,13 +12,13 @@ Unpack ARCHIVE to current directory if archive containts only one item
 archive containts more than one item.
 
 Options
-  -h         show help
-  -v         show all processing info during unpacking
-  -q         do not print result file or directory path
-  -f         force item overwrite in case such already exists. In case
-             of directories it will be fully deleted before unpacking a
-             new one
-  --version  print script version
+  -h, --help     show help
+  -v             show all processing info during unpacking
+  -q, --quiet    do not print result file or directory path
+  -f, --force    force item overwrite in case such already exists. In case
+                 of directories it will be fully deleted before unpacking a
+                 new one
+      --version  print script version
 EOF
 }
 
@@ -40,7 +40,7 @@ trap "terminate" SIGINT SIGHUP SIGTERM
 
 ### Parse arguments
 function parse_arguments () {
-    TEMP=$(getopt -o hvqf -l help,version,force -n "${UTIL_NAME}" -- "$@")
+    TEMP=$(getopt -o hvqf -l help,version,quiet,force -n "${UTIL_NAME}" -- "$@")
     if [ $? != 0 ] ; then echo "Try '${UTIL_NAME} --h' for more information." >&2 ; exit 1 ; fi
     eval set -- "$TEMP"
     while true ; do
@@ -57,7 +57,7 @@ function parse_arguments () {
                 VERBOSE="TRUE"
                 shift
                 ;;
-	    -q)
+	    -q|--quiet)
 	        DONT_SHOW_RES="TRUE"
                 shift
                 ;;
