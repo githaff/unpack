@@ -177,6 +177,15 @@ case "${EXT}" in
             xzcat -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
         fi
         ;;
+    "lzo")
+        mkdir -p "${TMP_DIR}"
+        if [ -n "${VERBOSE}" ]
+        then
+            lzop -d -v "${ARCHIVE}" -p"${TMP_DIR}"
+        else
+            lzop -d -q "${ARCHIVE}" -p"${TMP_DIR}"
+        fi
+        ;;
     "deb")
         cd "${TMP_DIR}"
         if [ -n "${VERBOSE}" ]
