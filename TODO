@@ -1,2 +1,1 @@
 * use MIME in case no extension is present (e.g. filename without dots at all)
-* by default unpack must show result result path (like now with -s)
