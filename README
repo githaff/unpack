@@ -24,23 +24,26 @@ USAGE
 
 unpack [OPTION]... ARCHIVE
 
-Options:
-  -h         show help
-  -v         show all processing info during unpacking
-  -s         print result file or directory path
-  --version  print script version
+Options
+  -h, --help     show help
+  -v             show all processing info during unpacking
+  -q, --quiet    do not print result file or directory path
+  -f, --force    force item overwrite in case such already exists. In case
+                 of directories it will be fully deleted before unpacking a
+                 new one
+      --version  print script version
 
 
 EXAMPLES
 
-unpack -s test.tar.gz
+unpack test.tar.gz
 
 
 HINTS
 
 Good idea will be set some alias for fast using of this script like
 
-alias up='unpack -s'
+alias up='unpack'
 
 in the ~/.bashrc which will make 'up' to silently unpack specified
 archive and print unpacked file or directory where archive contents
