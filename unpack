@@ -156,7 +156,16 @@ case "${EXT}" in
         then
             bzcat -v "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
         else
-            bzcat -v "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
+            bzcat "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
+        fi
+        ;;
+    "gz")
+        mkdir -p "${TMP_DIR}"
+        if [ -n "${VERBOSE}" ]
+        then
+            gunzip -v -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
+        else
+            gunzip -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
         fi
         ;;
     "deb")
