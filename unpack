@@ -23,7 +23,7 @@ function version () {
     echo "${UTIL_VERSION}"
 }
 
-# Delete termporary directory on interrupt
+### Delete termporary directory on interrupt
 function terminate () {
     rm -rf "${TMP_DIR}" > /dev/null
     if [ -n "${DST}" ]
@@ -35,223 +35,248 @@ function terminate () {
 trap "terminate" SIGINT SIGHUP SIGTERM
 
 
-# Parse arguments
-TEMP=$(getopt -o hsv -l help,version -n "${UTIL_NAME}" -- "$@")
-if [ $? != 0 ] ; then echo "Try '${UTIL_NAME} --h' for more information." >&2 ; exit 1 ; fi
-eval set -- "$TEMP"
-while true ; do
-    case "$1" in
-	-h|--help)
-            help
-            exit 0
+### Parse arguments
+function parse_arguments () {
+    TEMP=$(getopt -o hsv -l help,version -n "${UTIL_NAME}" -- "$@")
+    if [ $? != 0 ] ; then echo "Try '${UTIL_NAME} --h' for more information." >&2 ; exit 1 ; fi
+    eval set -- "$TEMP"
+    while true ; do
+        case "$1" in
+	    -h|--help)
+                help
+                exit 0
+                ;;
+            --version)
+                version
+                exit 0
+                ;;
+	    -v)
+                VERBOSE="TRUE"
+                shift
+                ;;
+	    -s)
+	        SHOW_RES="TRUE"
+                shift
+                ;;
+	    --)
+	        shift
+                break
+                ;;
+        esac
+    done
+
+    # Check number of arguments
+    if [ "${#}" -gt 2 -o "${#}" -lt 1 ]
+    then
+        help
+        exit 1
+    fi
+}
+
+### Get from archive name its:
+##    EXT      --- extension
+##    BASENAME --- base name (without full path and extension
+##    TMP_DIR --- path to directory to which data will be unpacked
+##    temporarily
+function analize_archive_name () {
+    # File to unpack
+    ARCHIVE=$(readlink -f "${1}")
+    ARCHIVE_NAME=$(basename "${ARCHIVE}")
+    ARCHIVE_DIR=$(dirname "${ARCHIVE}")
+    
+    # Check file existance
+    if [ ! -f "${ARCHIVE}" ]
+    then
+        echo "${UTIL_NAME}: cannot find ${ARCHIVE}: no such archive file" >&2
+        exit 1
+    fi
+    
+    # Archive basename and extension (defined as substring after last '.')
+    EXT=$(basename "${ARCHIVE_NAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr [:upper:] [:lower:])
+    if [ -z "${EXT}" ]; then
+        echo "${UTIL_NAME}: file ${ARCHIVE} is not archive: cannot separate extension" >&2
+        exit 1
+    fi
+    BASENAME=$(basename "${ARCHIVE}" .${EXT})
+    # Subextension (defined as part after penult dot) and corresponding basename
+    SUB_EXT=$(echo "${BASENAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr [:upper:] [:lower:])
+    if [ -n "${SUB_EXT}" ]; then
+        SUB_BASENAME=$(basename "${ARCHIVE_NAME}" ."${SUB_EXT}"."${EXT}")
+    fi
+
+    # If sub-extension is 'tar' - use it as part of whole extension (like
+    # 'tar.gz' instead of 'gz')
+    if [ "${SUB_EXT}" = "tar" ]
+    then
+        EXT="${SUB_EXT}.${EXT}"
+        BASENAME="${SUB_BASENAME}"
+    fi
+
+    # Temporary extraction path 
+    TMP_DIR=$(mktemp -u -d -t ${UTIL_NAME}.XXXXXXXXXXXXX --tmpdir=.)
+    TMP_DIR=$(readlink -f "${TMP_DIR}")
+}
+
+### Extract archive contant to the temporary directory
+##    Each case must unpack archive with path ${ARCHIVE} to directory
+##    ${TMP_DIR}.
+##    Hint: If corresponding unpacking tool doesn't support target
+##    directory specification - copy archive to directory previously
+function tmp_extract () {
+    mkdir -p "${TMP_DIR}"
+    case "${EXT}" in
+        "rar")
+            check
+            if [ -n "${VERBOSE}" ]
+            then
+                unrar x "${ARCHIVE}" "${TMP_DIR}"
+            else
+                unrar x "${ARCHIVE}" "${TMP_DIR}" > /dev/null
+            fi
             ;;
-        --version)
-            version
-            exit 0
+        "zip")
+            if [ -n "${VERBOSE}" ]
+            then
+                unzip -d "${TMP_DIR}" "${ARCHIVE}"
+            else
+                unzip -qq -d "${TMP_DIR}" "${ARCHIVE}"
+            fi
             ;;
-	-v)
-            VERBOSE="TRUE"
-            shift
+        "7z")
+            cd "${TMP_DIR}"
+            if [ -n "${VERBOSE}" ]
+            then
+                7z e  "${ARCHIVE}"
+            else
+                7z e "${ARCHIVE}" > /dev/null
+            fi
+            cd "${OLDPWD}"
             ;;
-	-s)
-	    SHOW_RES="TRUE"
-            shift
+        "tar" | "tar.bz2" | "tar.gz" | "tar.xz" | "tar.lzma" | "tgz" | "tbz" | "txz")
+            if [ -n "${VERBOSE}" ]
+            then
+                tar xvf "${ARCHIVE}" -C "${TMP_DIR}"
+            else
+                tar xf "${ARCHIVE}" -C "${TMP_DIR}" > /dev/null
+            fi
             ;;
-	--)
-	    shift
-            break
+        "bz2")
+            mkdir -p "${TMP_DIR}"
+            if [ -n "${VERBOSE}" ]
+            then
+                bzcat -v "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
+            else
+                bzcat -q "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
+            fi
+            ;;
+        "gz")
+            mkdir -p "${TMP_DIR}"
+            if [ -n "${VERBOSE}" ]
+            then
+                gunzip -v -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
+            else
+                gunzip -q -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
+            fi
+            ;;
+        "xz")
+            mkdir -p "${TMP_DIR}"
+            if [ -n "${VERBOSE}" ]
+            then
+                xzcat -v -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
+            else
+                xzcat -q -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
+            fi
+            ;;
+        "lzo")
+            mkdir -p "${TMP_DIR}"
+            if [ -n "${VERBOSE}" ]
+            then
+                lzop -d -v "${ARCHIVE}" -p"${TMP_DIR}"
+            else
+                lzop -d -q "${ARCHIVE}" -p"${TMP_DIR}"
+            fi
+            ;;
+        "deb")
+            cd "${TMP_DIR}"
+            if [ -n "${VERBOSE}" ]
+            then
+                ar xv "${ARCHIVE}"
+            else
+                ar x "${ARCHIVE}" > /dev/null
+            fi
+            cd "${OLDPWD}"
+            ;;
+        "rpm")
+            if [ -n "${VERBOSE}" ]
+            then
+                rpm2cpio "${ARCHIVE}" | cpio -idmuv --no-absolute-filenames "${TMP_DIR}"
+            else
+                rpm2cpio "${ARCHIVE}" | cpio -idmuv --no-absolute-filenames --quiet "${TMP_DIR}"
+            fi
+            ;;
+        *)
+            echo "${UTIL_NAME}: unknown archive format '${EXT}'"
+            rm -rf "${TMP_DIR}" &> /dev/null
+            exit 1
             ;;
     esac
-done
 
-# Check number of arguments
-if [ "${#}" -gt 2 -o "${#}" -lt 1 ]
-then
-    help
-    exit 1
-fi
+    # Check for error during unpacking
+    if [ "$?" -ne 0 ]; then
+        terminate
+    fi
+}
 
 
-# File to unpack
-ARCHIVE=$(readlink -f "${1}")
-ARCHIVE_NAME=$(basename "${ARCHIVE}")
-ARCHIVE_DIR=$(dirname "${ARCHIVE}")
-
-# Check file existance
-if [ ! -f "${ARCHIVE}" ]
-then
-    echo "${UTIL_NAME}: cannot find ${ARCHIVE}: no such archive file" >&2
-    exit 1
-fi
-
-# Archive basename and extension (defined as substring after last '.')
-EXT=$(basename "${ARCHIVE_NAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr [:upper:] [:lower:])
-if [ -z "${EXT}" ]; then
-    echo "${UTIL_NAME}: file ${ARCHIVE} is not archive: cannot separate extension" >&2
-    exit 1
-fi
-BASENAME=$(basename "${ARCHIVE}" .${EXT})
-# Subextension (defined as part after penult dot) and corresponding basename
-SUB_EXT=$(echo "${BASENAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr [:upper:] [:lower:])
-if [ -n "${SUB_EXT}" ]; then
-    SUB_BASENAME=$(basename "${ARCHIVE_NAME}" ."${SUB_EXT}"."${EXT}")
-fi
-
-# If sub-extension is 'tar' - use it as part of whole extension (like
-# 'tar.gz' instead of 'gz')
-if [ "${SUB_EXT}" = "tar" ]
-then
-    EXT="${SUB_EXT}.${EXT}"
-    BASENAME="${SUB_BASENAME}"
-fi
-
-# Temporary extraction path 
-TMP_DIR=$(mktemp -u -d -t ${UTIL_NAME}.XXXXXXXXXXXXX --tmpdir=.)
-TMP_DIR=$(readlink -f "${TMP_DIR}")
-
-# Extract archive contant to the temporary directory
-# Each case must unpack archive with path ${ARCHIVE} to directory
-# ${TMP_DIR}.
-# Hint: If corresponding unpacking tool doesn't support target
-# directory specification - copy archive to directory previously
-mkdir "${TMP_DIR}"
-case "${EXT}" in
-    "rar")
-        if [ -n "${VERBOSE}" ]
-        then
-            unrar x "${ARCHIVE}" "${TMP_DIR}"
-        else
-            unrar x "${ARCHIVE}" "${TMP_DIR}" > /dev/null
-        fi
-        ;;
-    "zip")
-        if [ -n "${VERBOSE}" ]
-        then
-            unzip -d "${TMP_DIR}" "${ARCHIVE}"
-        else
-            unzip -qq -d "${TMP_DIR}" "${ARCHIVE}"
-        fi
-        ;;
-    "7z")
-        cd "${TMP_DIR}"
-        if [ -n "${VERBOSE}" ]
-        then
-            7z e  "${ARCHIVE}"
-        else
-            7z e "${ARCHIVE}" > /dev/null
-        fi
-        cd "${OLDPWD}"
-        ;;
-    "tar" | "tar.bz2" | "tar.gz" | "tar.xz" | "tar.lzma" | "tgz" | "tbz" | "txz")
-        if [ -n "${VERBOSE}" ]
-        then
-            tar xvf "${ARCHIVE}" -C "${TMP_DIR}"
-        else
-            tar xf "${ARCHIVE}" -C "${TMP_DIR}" > /dev/null
-        fi
-        ;;
-    "bz2")
-        mkdir -p "${TMP_DIR}"
-        if [ -n "${VERBOSE}" ]
-        then
-            bzcat -v "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
-        else
-            bzcat -q "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
-        fi
-        ;;
-    "gz")
-        mkdir -p "${TMP_DIR}"
-        if [ -n "${VERBOSE}" ]
-        then
-            gunzip -v -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
-        else
-            gunzip -q -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
-        fi
-        ;;
-    "xz")
-        mkdir -p "${TMP_DIR}"
-        if [ -n "${VERBOSE}" ]
-        then
-            xzcat -v -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
-        else
-            xzcat -q -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
-        fi
-        ;;
-    "lzo")
-        mkdir -p "${TMP_DIR}"
-        if [ -n "${VERBOSE}" ]
-        then
-            lzop -d -v "${ARCHIVE}" -p"${TMP_DIR}"
-        else
-            lzop -d -q "${ARCHIVE}" -p"${TMP_DIR}"
-        fi
-        ;;
-    "deb")
-        cd "${TMP_DIR}"
-        if [ -n "${VERBOSE}" ]
-        then
-            ar xv "${ARCHIVE}"
-        else
-            ar x "${ARCHIVE}" > /dev/null
-        fi
-        cd "${OLDPWD}"
-        ;;
-    "rpm")
-        if [ -n "${VERBOSE}" ]
-        then
-            rpm2cpio "${ARCHIVE}" | cpio -idmuv --no-absolute-filenames "${TMP_DIR}"
-        else
-            rpm2cpio "${ARCHIVE}" | cpio -idmuv --no-absolute-filenames --quiet "${TMP_DIR}"
-        fi
-        ;;
-    *)
-        echo "${UTIL_NAME}: unknown archive format '${EXT}'"
-        rm -rf "${TMP_DIR}" &> /dev/null
-        exit 1
-        ;;
-esac
-
-# Check for error during unpacking
-if [ "$?" -ne 0 ]; then
-    terminate
-fi
-
-# Get number of files extracted from archive
-NUM_OF_FILES=$(ls -1 "${TMP_DIR}" | wc -l)
-if [ "${NUM_OF_FILES}" = "1" ]
-# If it is a single file or directory - unpack it to current directory
-then
-    DST=$(pwd)/$(ls "${TMP_DIR}")
-    ITEM=$(readlink -f "${TMP_DIR}"/*)
-    ITEM=$(basename "${ITEM}")
-    SRC="${TMP_DIR}"/"${ITEM}"
-    # If such file or directory already exists - act like there is
-    # several file in archive
-    if [ -e "${ITEM}" ]
+### Finalize unpacking by moving extracted to the temporary directory
+### files into needed path (following described in the README rules)
+function finalize_extracted () {
+    # Get number of files extracted from archive
+    NUM_OF_FILES=$(ls -1 "${TMP_DIR}" | wc -l)
+    if [ "${NUM_OF_FILES}" = "1" ]
+        # If it is a single file or directory - unpack it to current directory
     then
+        DST=$(pwd)/$(ls "${TMP_DIR}")
+        ITEM=$(readlink -f "${TMP_DIR}"/*)
+        ITEM=$(basename "${ITEM}")
+        SRC="${TMP_DIR}"/"${ITEM}"
+        # If such file or directory already exists - act like there is
+        # several file in archive
+        if [ -e "${ITEM}" ]
+        then
+            DST=$(readlink -f ./"${BASENAME}")
+            SRC="${TMP_DIR}"
+        fi
+        # If there is more than one files in archive - unpack to directory
+        # named after acrhive basename
+    else
         DST=$(readlink -f ./"${BASENAME}")
         SRC="${TMP_DIR}"
     fi
-# If there is more than one files in archive - unpack to directory
-# named after acrhive basename
-else
-    DST=$(readlink -f ./"${BASENAME}")
-    SRC="${TMP_DIR}"
-fi
 
-# Check if such file or directory already exists
-if [ -e "${DST}" ]
-then
-    echo "${UTIL_NAME}: cannot unpack '$(basename ${DST})': such file already exists in current directory"
-    rm -rf "${TMP_DIR}"
-    exit 1
-fi
+    # Check if such file or directory already exists
+    if [ -e "${DST}" ]
+    then
+        echo "${UTIL_NAME}: cannot unpack '$(basename ${DST})': such file already exists in current directory"
+        rm -rf "${TMP_DIR}"
+        exit 1
+    fi
 
-# Move archive to destination
-mv "${SRC}" "${DST}"
+    # Move archive to destination
+    mv "${SRC}" "${DST}"
+    
+    # Remove temporary derictory if it still exists
+    rm -rf "${TMP_DIR}" &> /dev/null
+}
 
-# Remove temporary derictory if it's still exists
-rm -rf "${TMP_DIR}" &> /dev/null
+
+############################################################################################
+######################################## Processing ########################################
+
+parse_arguments ${@}
+analize_archive_name "${1}"
+tmp_extract
+finalize_extracted
 
 # Show result file or directory path if needed
 if [ -n "${SHOW_RES}" ]
