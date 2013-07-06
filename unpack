@@ -24,7 +24,7 @@ function version () {
 }
 
 # Delete termporary directory on interrupt
-function sig_terminate () {
+function terminate () {
     rm -rf "${TMP_DIR}" > /dev/null
     if [ -n "${DST}" ]
     then
@@ -32,7 +32,7 @@ function sig_terminate () {
     fi
     exit 0
 }
-trap "sig_terminate" SIGINT SIGHUP SIGTERM
+trap "terminate" SIGINT SIGHUP SIGTERM
 
 
 # Parse arguments
@@ -211,6 +211,10 @@ case "${EXT}" in
         ;;
 esac
 
+# Check for error during unpacking
+if [ "$?" -ne 0 ]; then
+    terminate
+fi
 
 # Get number of files extracted from archive
 NUM_OF_FILES=$(ls -1 "${TMP_DIR}" | wc -l)
