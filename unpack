@@ -168,6 +168,15 @@ case "${EXT}" in
             gunzip -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
         fi
         ;;
+    "xz")
+        mkdir -p "${TMP_DIR}"
+        if [ -n "${VERBOSE}" ]
+        then
+            xzcat -v -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}"
+        else
+            xzcat -c "${ARCHIVE}" > "${TMP_DIR}/${BASENAME}" 2> /dev/null
+        fi
+        ;;
     "deb")
         cd "${TMP_DIR}"
         if [ -n "${VERBOSE}" ]
