@@ -15,6 +15,10 @@ placed.
 
 Archive type is deduced from archive extension.
 
+Supported archive types:
+rar, zip, 7z, bz2, gz, xz, lzo, deb, rpm, tared archives (tar.gz,
+tar.bz2, tgz, tar, etc...)
+
 
 USAGE
 

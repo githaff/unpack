@@ -1,4 +1,3 @@
-* make support for not packerd data (just archived) like *.bz2, *.gz, *.xz, *.lzo
 * use MIME in case no extension is present (e.g. filename without dots at all)
 * if needed directory/name is already presend - unpack as '<name> (1)'
   or something like this (must be regulated through options)

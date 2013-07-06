@@ -2,7 +2,7 @@
 
 
 UTIL_NAME="$(basename ${0})"
-UTIL_VERSION="20130621"
+UTIL_VERSION="20130706"
 
 function help () {
 cat <<EOF
