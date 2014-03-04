@@ -290,7 +290,7 @@ function finalize_extracted () {
 ############################################################################################
 ######################################## Processing ########################################
 
-parse_arguments ${@}
+parse_arguments "${@}"
 analize_archive_name "${ARCHIVE}"
 tmp_extract
 finalize_extracted
