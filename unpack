@@ -35,7 +35,8 @@ terminate() {
     fi
     exit 0
 }
-trap "terminate" SIGINT SIGHUP SIGTERM
+# Consider use of trap ... EXIT
+trap "terminate" INT HUP TERM
 
 
 ### Parse arguments
