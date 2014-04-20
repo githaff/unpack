@@ -1,9 +1,9 @@
-Unpack is a wrap for set of unpacking tools such as tar, unrar, unzip.
+Unpack is a wrapper for set of unpacking tools such as tar, unrar, unzip.
 
 The main purpose of this script is to prevent user from agression of
 enemy archives which doesn't contains nested subdirectory and so
 throws many different items (files and/or directories) into current
-directory while unpacking. Which may be pretty paynfull if archive was
+directory while unpacking. Which may be pretty painful if archive was
 unpacked in some ~/Downloads path which already contains many
 different files - new ones can easily be lost amongst old ones.
 
