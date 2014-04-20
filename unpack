@@ -238,7 +238,7 @@ inc_name() {
     ind="1"
 
     while [ -e "${1} (${ind})" ]; do
-        ind=$((${ind} + 1))
+        ind=$((ind + 1))
     done
 
     DST="${1} (${ind})"
