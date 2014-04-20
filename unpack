@@ -5,7 +5,7 @@ UTIL_NAME="$(basename ${0})"
 UTIL_VERSION="20130706"
 
 help() {
-cat <<EOF
+    cat <<EOF
 Usage: ${UTIL_NAME} [OPTION]... ARCHIVE
 Unpack ARCHIVE to current directory if archive containts only one item
 (file or directory) or to new directory named after archive name if
@@ -46,29 +46,29 @@ parse_arguments() {
     while true ; do
         case "$1" in
 	    -h|--help)
-                help
-                exit 0
-                ;;
-            --version)
-                version
-                exit 0
-                ;;
+            help
+            exit 0
+            ;;
+        --version)
+            version
+            exit 0
+            ;;
 	    -v)
-                VERBOSE="TRUE"
-                shift
-                ;;
+            VERBOSE="TRUE"
+            shift
+            ;;
 	    -q|--quiet)
 	        DONT_SHOW_RES="TRUE"
-                shift
-                ;;
-            -f|--force)
+            shift
+            ;;
+        -f|--force)
 	        FORCE_REPLACE="TRUE"
-                shift
-                ;;
+            shift
+            ;;
 	    --)
 	        shift
-                break
-                ;;
+            break
+            ;;
         esac
     done
 
