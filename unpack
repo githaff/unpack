@@ -74,7 +74,7 @@ parse_arguments() {
     done
 
     # Check number of arguments
-    if [ "${#}" -gt 2 -o "${#}" -lt 1 ]
+    if [ "${#}" -lt 1 ]
     then
         help
         exit 1
