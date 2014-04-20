@@ -84,7 +84,6 @@ parse_arguments() {
 analize_archive_name() {
     # File to unpack
     ARCHIVE_NAME=$(basename "${ARCHIVE}")
-    ARCHIVE_DIR=$(dirname "${ARCHIVE}")
 
     # Check file existance
     if [ ! -f "${ARCHIVE}" ]
