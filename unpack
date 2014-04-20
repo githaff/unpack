@@ -218,7 +218,7 @@ tmp_extract() {
             ;;
         *)
             echo "${UTIL_NAME}: unknown archive format '${EXT}'"
-            rm -rf "${TMP_DIR}" &> /dev/null
+            rm -rf "${TMP_DIR}" >/dev/null 2>&1
             exit 1
             ;;
     esac
@@ -237,11 +237,11 @@ tmp_extract() {
 inc_name() {
     ind="1"
 
-    while [ -e "${1} ($ind)" ]; do
-        ((ind++))
+    while [ -e "${1} (${ind})" ]; do
+        ind=$((${ind} + 1))
     done
 
-    DST="${1} ($ind)"
+    DST="${1} (${ind})"
 }
 
 ### Finalize unpacking by moving extracted to the temporary directory
@@ -277,7 +277,7 @@ finalize_extracted() {
     mv "${SRC}" "${DST}"
 
     # Remove temporary derictory if it still exists
-    rm -rf "${TMP_DIR}" &> /dev/null
+    rm -rf "${TMP_DIR}" >/dev/null 2>&1
 }
 
 
