@@ -72,13 +72,6 @@ parse_arguments() {
         esac
     done
 
-    # Check number of arguments
-    if [ "${#}" -gt 2 -o "${#}" -lt 1 ]
-    then
-        help
-        exit 1
-    fi
-
     ARCHIVE=$(readlink -f "${1}")
 }
 
