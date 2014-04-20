@@ -4,7 +4,7 @@
 UTIL_NAME="$(basename ${0})"
 UTIL_VERSION="20130706"
 
-function help () {
+help() {
 cat <<EOF
 Usage: ${UTIL_NAME} [OPTION]... ARCHIVE
 Unpack ARCHIVE to current directory if archive containts only one item
@@ -22,12 +22,12 @@ Options
 EOF
 }
 
-function version () {
+version() {
     echo "${UTIL_VERSION}"
 }
 
 ### Delete termporary directory on interrupt
-function terminate () {
+terminate() {
     rm -rf "${TMP_DIR}" > /dev/null
     if [ -n "${DST}" ]
     then
@@ -39,7 +39,7 @@ trap "terminate" SIGINT SIGHUP SIGTERM
 
 
 ### Parse arguments
-function parse_arguments () {
+parse_arguments() {
     TEMP=$(getopt -o hvqf -l help,version,quiet,force -n "${UTIL_NAME}" -- "$@")
     if [ $? != 0 ] ; then echo "Try '${UTIL_NAME} --h' for more information." >&2 ; exit 1 ; fi
     eval set -- "$TEMP"
@@ -87,18 +87,18 @@ function parse_arguments () {
 ##    BASENAME --- base name (without full path and extension
 ##    TMP_DIR --- path to directory to which data will be unpacked
 ##    temporarily
-function analize_archive_name () {
+analize_archive_name() {
     # File to unpack
     ARCHIVE_NAME=$(basename "${ARCHIVE}")
     ARCHIVE_DIR=$(dirname "${ARCHIVE}")
-    
+
     # Check file existance
     if [ ! -f "${ARCHIVE}" ]
     then
         echo "${UTIL_NAME}: cannot find ${ARCHIVE}: no such archive file" >&2
         exit 1
     fi
-    
+
     # Archive basename and extension (defined as substring after last '.')
     EXT=$(basename "${ARCHIVE_NAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr [:upper:] [:lower:])
     if [ -z "${EXT}" ]; then
@@ -120,7 +120,7 @@ function analize_archive_name () {
         BASENAME="${SUB_BASENAME}"
     fi
 
-    # Temporary extraction path 
+    # Temporary extraction path
     TMP_DIR=$(mktemp -u -d -t ${UTIL_NAME}.XXXXXXXXXXXXX --tmpdir=.)
     TMP_DIR=$(readlink -f "${TMP_DIR}")
 }
@@ -130,7 +130,7 @@ function analize_archive_name () {
 ##    ${TMP_DIR}.
 ##    Hint: If corresponding unpacking tool doesn't support target
 ##    directory specification - copy archive to directory previously
-function tmp_extract () {
+tmp_extract() {
     mkdir -p "${TMP_DIR}"
     case "${EXT}" in
         "rar")
@@ -240,19 +240,19 @@ function tmp_extract () {
 ##    if given name is already taken than find which name (following
 ##    '<name> (N)' pattern) wasn't taken yet in this directory.
 
-function inc_name () {
+inc_name() {
     ind="1"
 
     while [ -e "${1} ($ind)" ]; do
         ((ind++))
     done
-    
+
     DST="${1} ($ind)"
 }
 
 ### Finalize unpacking by moving extracted to the temporary directory
 ### files into needed path (following described in the README rules)
-function finalize_extracted () {
+finalize_extracted() {
     # Get number of files extracted from archive
     NUM_OF_FILES=$(ls -1 "${TMP_DIR}" | wc -l)
     if [ "${NUM_OF_FILES}" = "1" ]
@@ -281,7 +281,7 @@ function finalize_extracted () {
 
     # Move archive to destination
     mv "${SRC}" "${DST}"
-    
+
     # Remove temporary derictory if it still exists
     rm -rf "${TMP_DIR}" &> /dev/null
 }
