@@ -94,14 +94,14 @@ analize_archive_name() {
     fi
 
     # Archive basename and extension (defined as substring after last '.')
-    EXT=$(basename "${ARCHIVE_NAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr [:upper:] [:lower:])
+    EXT=$(basename "${ARCHIVE_NAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr '[:upper:]' '[:lower:]')
     if [ -z "${EXT}" ]; then
         echo "${UTIL_NAME}: file ${ARCHIVE} is not archive: cannot separate extension" >&2
         exit 1
     fi
-    BASENAME=$(basename "${ARCHIVE}" .${EXT})
+    BASENAME=$(basename "${ARCHIVE}" ".${EXT}")
     # Subextension (defined as part after penult dot) and corresponding basename
-    SUB_EXT=$(echo "${BASENAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr [:upper:] [:lower:])
+    SUB_EXT=$(echo "${BASENAME}" | sed '/\./!s/.*//;/\./s/.*\.//' | tr '[:upper:]' '[:lower:]')
     if [ -n "${SUB_EXT}" ]; then
         SUB_BASENAME=$(basename "${ARCHIVE_NAME}" ."${SUB_EXT}"."${EXT}")
     fi
@@ -115,7 +115,7 @@ analize_archive_name() {
     fi
 
     # Temporary extraction path
-    TMP_DIR=$(mktemp -u -d -t ${UTIL_NAME}.XXXXXXXXXXXXX --tmpdir=.)
+    TMP_DIR=$(mktemp -u -d -t "${UTIL_NAME}.XXXXXXXXXXXXX" --tmpdir=.)
     TMP_DIR=$(readlink -f "${TMP_DIR}")
 }
 
